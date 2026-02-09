@@ -1,19 +1,29 @@
-from pathlib import Path
+from checks import *
 
-def lists_for_file(path):
-    file_log=Path(path)
-    with open(file_log,'r')as f:
-        return [row.split(',') for row in f]
+def count_ip_logs(list_data):
+    count_ip_logs= {}
+    for ip in list_data:
+        count_ip_logs[ip[1]]=count_ip_logs.get(ip[1],0)+1
+    return count_ip_logs
 
-def zip_addr_ip(list_data):
-    return [ip[1] for ip in list_data if not ip[1].startswith(('192.168','10.'))]
+def dict_check_lines(list_data):
+    external_ip=set(get_external_addrs(list_data))
+    sensitive_port={row[1] for row in flirt_by_sense_port(list_data)}
+    large_packet={row[1] for row in size_over_5000(list_data)}
+    night_activity={row[1] for row in check_night_activities(list_data)}
 
-def filt_by_sense_port(list_data):
-    return [row for row in list_data if  row[3] in ['22','23','3389']]
+    ip_logs=count_ip_logs(list_data)
+    dict_suspicious={}
 
-def size_over_5000(list_data):
-    return [row for row in list_data if int(row[-1].strip())>5000]
-def traffic_labeling(list_data):
-    return['LARGE' if int(row[-1].strip())>5000 else 'NORMAL' for row in list_data]
+    for key in ip_logs.keys():
+        suspicious = []
+        if any(key == value for value in external_ip):suspicious.append("EXTERNAL_IP")
+        if any(key ==value for value in sensitive_port) :suspicious.append("SENSITIVE_PORT")
+        if any(key ==value for value in large_packet):suspicious.append("LARGE_PACKET")
+        if any(key ==value for value in night_activity):suspicious.append("NIGHT_ACTIVITY")
+        if suspicious: dict_suspicious[key]=suspicious
+    return dict_suspicious
 
-print (traffic_labeling(lists_for_file('C:\\PythonCode\\log_analayzer\\log_analyzer\\network_traffic.log')))
+
+
+
