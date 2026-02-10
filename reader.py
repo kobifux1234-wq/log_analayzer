@@ -1,12 +1,14 @@
 from pathlib import Path
 
-def lists_for_file(path):
-    file_log=Path(path)
-    with open(file_log,'r')as f:
-        return [row.split(',') for row in f]
+# def lists_for_file(path):
+#     file_log=Path(path)
+#     with open(file_log,'r')as f:
+#         return [row.split(',') for row in f]
 
 def get_all_suspicious(file_path):
-    pass
+    with open(file_path,'r') as file:
+        for line in file:
+            yield line.split(',')
 
 
 
