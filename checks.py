@@ -1,16 +1,35 @@
 from config import *
+from reader import *
 
-def get_external_addrs(list_data):
-    return [ip[1] for ip in list_data if not ip[1].startswith(INTERNAL_ADDRS)]
+list_data=lists_for_file(FILE_PATH)
+list_bytes=[int(n[-1]) for n in list_data]
 
-def flirt_by_sense_port(list_data):
-    return [row for row in list_data if  row[1] in SENSITIVE_PORTS]
+get_size_in_kb= list(map(lambda x: x/1024,list_bytes))
 
-def size_over_5000(list_data):
-    return [row for row in list_data if int(row[-1].strip())>BIGGEST_MSG]
+# get_night_hours=list(map(lambda x: x[0].split()[1][:2:],list_data))
+# get_line_sensetive_port=list(filter(lambda x:x[3] in SENSITIVE_PORTS,list_data))
+# get_sleep_hours =list(filter(lambda x: NIGHT_START<=x[0].split()[1][:2:]<NIGHT_FINISH,list_data))
 
-def check_night_activities(list_data):
-    return [row for row in list_data if NIGHT_START<row[0].split()[1]<NIGHT_FINISH]
+# suspicion_checks = {"EXTERNAL_IP": lambda row: not row[1].startswith(INTERNAL_ADDRS),
+#                         "SENSITIVE_PORT": lambda row: row in get_line_sensetive_port, "LARGE_PACKET":
+#                             lambda row: int(row[-1].strip())>BIGGEST_MSG, "NIGHT_ACTIVITY": lambda row:
+#         row in get_sleep_hours}
+suspicion_checks = {
+    "EXTERNAL_IP": lambda row: not row[1].startswith(INTERNAL_ADDRS),
+    "SENSITIVE_PORT": lambda row: row[3] in SENSITIVE_PORTS,
+    "LARGE_PACKET":lambda row: int(row[-1].strip())>BIGGEST_MSG,
+    "NIGHT_ACTIVITY": lambda row: NIGHT_START<=row[0].split()[1][:2:]<NIGHT_FINISH
+}
+
+def suspicion_for_line(dict_sus,line):
+    return list(filter(lambda n: dict_sus[n](line),dict_sus.keys()))
+line_in_suspicion=list(map(lambda line:suspicion_for_line(suspicion_checks,line),list_data))
+line_suspicion_over_2=list(filter(lambda n:len(n)>1,line_in_suspicion))
 
 def traffic_labeling(list_data):
     return['LARGE' if int(row[-1].strip())>BIGGEST_MSG else 'NORMAL' for row in list_data]
+
+def port_to_protocol(list_data):
+    return {row[3]:row[4] for row in list_data}
+
+
