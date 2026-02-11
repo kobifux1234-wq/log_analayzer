@@ -8,8 +8,4 @@ from pathlib import Path
 def get_all_suspicious(file_path):
     with open(file_path,'r') as file:
         for line in file:
-            yield line.split(',')
-
-
-
-
+            yield line.strip().split(',')
